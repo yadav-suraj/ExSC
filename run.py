@@ -15,7 +15,7 @@ from torch.optim import lr_scheduler
 #from tqdm import tqdm_notebook as tqdm
 
 from src.model import get_model
-from src.utils import get_data, inferenceCallback
+from src.utils import get_data, inferenceCallback, stopping_criteria
 from src.metric import normalize
 from src.affinity import laplacian
 
@@ -41,13 +41,13 @@ general_params = {
         'data_dir': './data',               # directory with all data files
         'num_workers': 32,                  # dataloader parameter
         'prior': 'sns',                     # sns = spike and slab; normal = gaussian
-        'imagefoldername': 'foldername/'
+        'imagefoldername': 'foldername_sum_alpha0.5/'
         }
 params.update(general_params)
 
 if params['prior'] == 'sns':
     prior_params = {
-        'alpha' : 0.001,
+        'alpha' : 0.5,
         'c' : 50,
         'c_delta' : 0.001,
         'beta' : 0.1,
@@ -86,6 +86,7 @@ def main():
     
     input_size = params['input_size']
     batch_size = params['batch_size']
+    first_time = True
     
     train_set, train_loader, valid_set, valid_loader = get_data(params)
         
@@ -103,7 +104,7 @@ def main():
 
         running_loss, running_valid_loss = 0.0, 0.0
         
-        if (epoch+1) > 300:
+        if (epoch+1) > 800:
             count += 1
             if count >= 50:
                 early_stop_threshold *= 2
@@ -126,7 +127,6 @@ def main():
             optimizer.step()
 
             running_loss += loss.item()
-            break
         
         loss_epoch = running_loss/len(train_loader)
         loss_list[epoch+1] = loss_epoch
@@ -141,7 +141,6 @@ def main():
             normed_mu = normalize(mu)
             
             running_valid_loss = model.loss_function(normed_mu, L, X_valid, x_dec, mu, logvar, logspike)
-            break
         
         valid_loss_epoch = running_valid_loss / len(valid_loader)
         valid_loss_list[epoch+1] = valid_loss_epoch
@@ -153,7 +152,7 @@ def main():
             orth_norm = torch.trace(torch.mm(ort.T,ort))    #just calculating on the last batch (could also be done for each batch)
             
             print("Epoch:{}, Loss: {:.4f}, validation set loss:{:.4f}, orthogonality index: {:.5f}".format(epoch+1, loss_epoch, valid_loss_epoch, orth_norm))
-        if epoch>400:
+        if epoch>800:
             if stopping_criteria(list(valid_loss_list.values())[-5:], early_stop_threshold, first_time = first_time):
                 print("\n Early Stopping with early stopping threshold = {} \n".format(early_stop_threshold))
                 break

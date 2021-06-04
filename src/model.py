@@ -221,7 +221,7 @@ class vae_sns(BaseModel): #VAE
         return LOSS
     
     def loss_function(self, Y, L, *args):
-        spectral_loss = self.spec_loss(Y,L)/ Y.shape[0]
+        spectral_loss = self.spec_loss(Y,L)/ (Y.shape[0]**2)
         vae_loss = self.vae_loss(*args)
         
         loss = spectral_loss + vae_loss
