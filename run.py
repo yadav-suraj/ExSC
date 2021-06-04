@@ -41,7 +41,7 @@ general_params = {
         'data_dir': './data',               # directory with all data files
         'num_workers': 32,                  # dataloader parameter
         'prior': 'sns',                     # sns = spike and slab; normal = gaussian
-        'imagefoldername': 'foldername_sum_alpha0.5/'
+        'imagefoldername': 'foldername/'
         }
 params.update(general_params)
 
