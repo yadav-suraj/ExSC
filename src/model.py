@@ -246,8 +246,6 @@ class vae_normal(BaseModel):
         return mu + eps*std
     
     def forward(self, x):
-        logspike = None
-        
         x_enc_prev = self.encoder(x)
         
         mu, logvar = self.mu_layer(x_enc_prev), self.sigma_layer(x_enc_prev)
@@ -256,11 +254,9 @@ class vae_normal(BaseModel):
         x_enc = self.reparameterize(mu_new, logvar)
         x_dec = self.decoder(x_enc)        
         
-        return x_enc, x_dec, mu_new, logvar, logspike
+        return x_enc, x_dec, mu_new, logvar, None
     
     def inference(self, x, is_decoder=True):
-        logspike = None
-
         x_enc_prev = self.encoder(x)
         mu, logvar = self.mu_layer(x_enc_prev), self.sigma_layer(x_enc_prev)
 
@@ -271,18 +267,19 @@ class vae_normal(BaseModel):
         else:
             x_dec = None
 
-        return x_enc, x_dec, mu, logvar, logspike
+        return x_enc, x_dec, mu, logvar, None
     
     # Reconstruction + KL divergence losses summed over all elements of batch
-    def vae_loss(self, x, recon_x, mu, logvar, is_real):    #TODO: check what dim should be
+    def vae_loss(self, x, recon_x, mu, logvar, *args):    #TODO: check what dim should be
         dim = 1
+        is_real = True
         mse_criterion = torch.nn.MSELoss(reduction="none")
         if is_real:
             recons_loss = torch.sum(mse_criterion(recon_x,x),dim=dim)
         else:
             recons_loss = torch.sum(torch.nn.functional.binary_cross_entropy(recon_x, x, reduction='none'),dim=dim)
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=dim)
-        return torch.mean(recons_loss + (self.beta * KLD))
+        return torch.sum(recons_loss + (self.beta * KLD))
     
     def loss_function(self, Y, L, *args):
         spectral_loss = self.spec_loss(Y,L)/Y.shape[0]

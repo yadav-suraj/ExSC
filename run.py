@@ -36,7 +36,7 @@ params = defaultdict(lambda: None)
 general_params = {
         'dset': args.dset,                  # dataset: mnist/ fmnist (FashionMNIST)
         'val_set_fraction': 0.1,            # fraction of training set to use as validation
-        'max_epochs': 1000,                    # maximum number of training epochs
+        'max_epochs': 1000,                 # maximum number of training epochs
         'infer_epochs' : 5,                 # Number of epoch before calculating NMI during training (just to keep a check; not required)
         'data_dir': './data',               # directory with all data files
         'num_workers': 32,                  # dataloader parameter
